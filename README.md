@@ -2,7 +2,7 @@
 
 Cloud9 x JetBrains Sky’s The Limit Hackathon 2026 · Category 1: VALORANT Tactical Scouting, Utility Placement & Operator Profiler.
 
-**SAMPLE / DEMO DATA — fictional, seeded, not real GRID data.** All handles, matches and tendencies are synthetic. No backend, authentication, API keys or runtime network calls. This scaffold intentionally contains only a placeholder UI.
+**SAMPLE / DEMO DATA — fictional, seeded, not real GRID data.** All handles, matches and tendencies are synthetic. No backend, authentication, API keys or runtime network calls. Six coach-facing views share a lifted filter state: Dashboard, Utility Heatmap, Operator Profiler, Anti-Strat Generator, Self-Scout and Scout Report.
 
 ## Run
 
@@ -25,4 +25,18 @@ Node 22. `source ~/.nvm/nvm.sh && nvm use 22`, then `npm ci`, `npm test`, `npm r
 
 CSV requires an `eventType` column (`ability`, `sniper`, `round`, `match`) and columns named exactly as the matching TypeScript interface. `dataLabel` is assigned from the loader argument, and ability `phase` is derived. Round `economy` is a CSV-escaped JSON object keyed by team; match rounds are reconstructed from the round rows. JSON accepts either an array of records with `eventType`, or a full ScoutData object. Separate match/round records are needed for economy and buy-rate denominators. A ten-row ability example is in `public/sample-grid-export.csv` (demo only, not a complete match). Malformed columns, enums, numbers, booleans, coordinates and JSON/CSV syntax are reported rather than silently guessed.
 
-The UI should keep the data label visible on screen and in exports, and distinguish unsupported/no observations from a measured zero. No visual verification was performed for this placeholder.
+## Scouting workspace
+
+The sample badge stays visible on every view; the active import provenance is shown separately and exported. Filters apply across the app. Player/agent/ability options narrow by team and map; changing either clears dependent selectors. Self-Scout selects Cloud9, and leaving it restores the previous opponent. If an imported dataset has no Cloud9 records, self-scouting explicitly shows no observations.
+
+`src/lib/workspace.ts` provides `scopeData(data, filters)` and `workspaceAnalysis(scopedData, team, map?)`. Ability-only filters join sniper buys and economy to matching cast rounds, rather than pretending a weapon buy has an agent or ability attribute. Side filters use the selected team's attacking/defending rounds. A utility timing observation supplements sentinel and Operator insights, so the standard map-level sample brief has at least three observations. Sparse slices honestly show fewer; no placeholder insights are invented.
+
+The Data panel uses `loadData` and applies an import only when there are no errors. Reset restores the seeded sample. The included ten-row CSV has no match/round metadata or sniper buys: utility views work, while economy and sniper data remain unavailable.
+
+Scout Report follows the shared filters and uses a dedicated report-map selector only when global map is `all`. HTML exports contain inline CSS and SVG with no scripts, fonts, images or remote dependencies. JSON exports include the current scope and provenance. Print CSS hides the workspace chrome and formats the report for A4. `src/lib/export.ts` contains the download helpers.
+
+## Browser verification
+
+Run `npm run build`, keep `npm run preview -- --port 4173 --host` running, then run `npm run e2e` in another shell. The smoke script launches system Google Chrome headless, connects over CDP using `playwright-core`, compares heatmap cell-count arrays after team/map changes, exercises chart toggles and empty states, verifies Operator profiles, downloads HTML/JSON, renders the standalone HTML without network requests, checks print output is a single A4 page, exercises import validation/reset and checks mobile overflow and browser console errors. It captures each view plus report/import/mobile evidence.
+
+Environment overrides: `CHROME_PATH` (default: `google-chrome` from PATH), `BASE_URL` (default: `http://127.0.0.1:4173`), `SHOTS_DIR` (default: `~/shots`). Screenshots and export artifacts are outside the repository. No browser binaries are downloaded.
