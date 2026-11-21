@@ -25,6 +25,17 @@ const VIEWS = [
 ] as const;
 type View = (typeof VIEWS)[number];
 const defaults: Filters = { team: "Nova Ridge", map: "all" };
+const allLabels: Record<keyof Filters, string> = {
+  team: "All teams",
+  map: "All maps",
+  player: "All players",
+  agent: "All agents",
+  ability: "All abilities",
+  abilityType: "All utility types",
+  side: "All sides",
+  phase: "All phases",
+  matchId: "All matches",
+};
 const unique = (values: string[]) => [...new Set(values)].sort();
 const roundCount = (data: ScoutData) =>
   new Set(
@@ -44,6 +55,7 @@ export default function App() {
     [points, setPoints] = useState(false),
     [reportMap, setReportMap] = useState<MapName>("Ascent");
   const [lastOpponent, setLastOpponent] = useState("Nova Ridge");
+  const [reportTeam, setReportTeam] = useState("Nova Ridge");
   const reportRef = useRef<HTMLDivElement>(null);
   const scoped = useMemo(() => scopeData(data, filters), [data, filters]);
   const teams = unique([
@@ -61,12 +73,16 @@ export default function App() {
     [data, filters.team, filters.map],
   );
   const analysis = useMemo(
-    () => workspaceAnalysis(scoped, team, filters.map),
+    () => workspaceAnalysis(scoped, team, filters.map, filters.side),
     [scoped, team, filters.map],
   );
   const stats = {
-    players: analysis.stats.players.filter((p) => p.team === team),
-    teams: analysis.stats.teams.filter((t) => t.team === team),
+    players: analysis.stats.players.filter(
+      (p) => team === "all" || p.team === team,
+    ),
+    teams: analysis.stats.teams.filter(
+      (t) => team === "all" || t.team === team,
+    ),
   };
   const mapsInScope = MAP_NAMES.filter(
     (m) =>
@@ -85,22 +101,39 @@ export default function App() {
   );
   const reportMapName =
     filters.map && filters.map !== "all" ? (filters.map as MapName) : reportMap;
+  const reportOpponent =
+    team === "all"
+      ? teams.includes(reportTeam)
+        ? reportTeam
+        : (teams[0] ?? "Unknown team")
+      : team;
   const reportData = useMemo(
-    () => scopeData(data, { ...filters, map: reportMapName }),
-    [data, filters, reportMapName],
+    () =>
+      scopeData(data, { ...filters, team: reportOpponent, map: reportMapName }),
+    [data, filters, reportMapName, reportOpponent],
   );
   const reportAnalysis = useMemo(
-    () => workspaceAnalysis(reportData, team, reportMapName),
-    [reportData, team, reportMapName],
+    () =>
+      workspaceAnalysis(
+        reportData,
+        reportOpponent,
+        reportMapName,
+        filters.side,
+      ),
+    [reportData, reportOpponent, reportMapName],
   );
   const report = {
-    opponent: team,
+    opponent: reportOpponent,
     map: reportMapName,
-    filters: { ...filters, map: reportMapName },
+    filters: { ...filters, team: reportOpponent, map: reportMapName },
     top3Tendencies: reportAnalysis.insights.slice(0, 3),
     operatorProfile: {
-      players: reportAnalysis.stats.players.filter((p) => p.team === team),
-      teams: reportAnalysis.stats.teams.filter((t) => t.team === team),
+      players: reportAnalysis.stats.players.filter(
+        (p) => p.team === reportOpponent,
+      ),
+      teams: reportAnalysis.stats.teams.filter(
+        (t) => t.team === reportOpponent,
+      ),
     },
     antiStrats: reportAnalysis.antiStrats.filter((a) =>
       reportAnalysis.insights.slice(0, 3).some((i) => i.id === a.insightId),
@@ -138,7 +171,10 @@ export default function App() {
     if (view === "Self-Scout" && next !== "Self-Scout" && team === "Cloud9")
       setFilters((f) => ({
         ...f,
-        team: teams.includes(lastOpponent) ? lastOpponent : teams[0],
+        team:
+          lastOpponent === "all" || teams.includes(lastOpponent)
+            ? lastOpponent
+            : teams[0],
         player: "all",
         agent: "all",
         ability: "all",
@@ -199,7 +235,7 @@ export default function App() {
         value={filters[key] ?? "all"}
         onChange={(e) => changeFilter(key, e.target.value)}
       >
-        {allowAll && <option value="all">All {label.toLowerCase()}</option>}
+        {allowAll && <option value="all">{allLabels[key]}</option>}
         {values.map((v) => (
           <option key={v} value={v}>
             {labels?.[v] ?? v}
@@ -373,9 +409,11 @@ export default function App() {
           {filterSelect(
             "team",
             "Team",
-            unique([...teams, team]),
+            teams.includes(team) || team === "all"
+              ? teams
+              : unique([...teams, team]),
             undefined,
-            false,
+            true,
           )}
           {filterSelect("map", "Map", [...MAP_NAMES])}
           {filterSelect(
@@ -386,7 +424,7 @@ export default function App() {
               ...data.sniperEvents
                 .filter(
                   (e) =>
-                    e.team === team &&
+                    (team === "all" || e.team === team) &&
                     (!filters.map ||
                       filters.map === "all" ||
                       e.map === filters.map),
@@ -435,7 +473,7 @@ export default function App() {
               ...data.sniperEvents
                 .filter(
                   (e) =>
-                    e.team === team &&
+                    (team === "all" || e.team === team) &&
                     (!filters.map ||
                       filters.map === "all" ||
                       e.map === filters.map),
@@ -465,7 +503,7 @@ export default function App() {
             <h1>{view}</h1>
             <p>
               {view === "Coach Dashboard"
-                ? `Your next advantage against ${team}. Patterns first. Evidence always.`
+                ? `Your next advantage against ${team === "all" ? "the field" : team}. Patterns first. Evidence always.`
                 : view === "Utility Heatmap"
                   ? "See the setup. Find the space. Plan the clear."
                   : view === "Operator Profiler"
@@ -478,7 +516,7 @@ export default function App() {
             </p>
           </div>
           <span className="context-tag">
-            <i className="dot blue" /> {team}
+            <i className="dot blue" /> {team === "all" ? "All teams" : team}
           </span>
         </div>
         {(view === "Coach Dashboard" || view === "Self-Scout") && (
@@ -720,6 +758,20 @@ export default function App() {
           <>
             <div className="report-actions">
               <div>
+                {team === "all" && (
+                  <label>
+                    Report opponent
+                    <select
+                      data-testid="report-team"
+                      value={reportOpponent}
+                      onChange={(e) => setReportTeam(e.target.value)}
+                    >
+                      {teams.map((t) => (
+                        <option key={t}>{t}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 {(!filters.map || filters.map === "all") && (
                   <label>
                     Report map{" "}
@@ -748,7 +800,10 @@ export default function App() {
                   data-testid="export-html"
                   onClick={() =>
                     downloadFile(
-                      reportHTML(reportRef.current?.innerHTML ?? "", team),
+                      reportHTML(
+                        reportRef.current?.innerHTML ?? "",
+                        reportOpponent,
+                      ),
                       "cloud9-scout-report.html",
                       "text/html",
                     )
@@ -780,7 +835,7 @@ export default function App() {
                 <div>
                   <p className="eyebrow">CLOUD9 / MATCH PREPARATION</p>
                   <h2>
-                    {team} <span>on {reportMapName}</span>
+                    {reportOpponent} <span>on {reportMapName}</span>
                   </h2>
                   <p>
                     SCOUT REPORT · {roundCount(reportData)} rounds ·{" "}
@@ -796,7 +851,11 @@ export default function App() {
               </div>
               <p className="report-scope">
                 Scope:{" "}
-                {Object.entries({ ...filters, map: reportMapName })
+                {Object.entries({
+                  ...filters,
+                  team: reportOpponent,
+                  map: reportMapName,
+                })
                   .filter(([, v]) => v && v !== "all")
                   .map(([k, v]) => `${k}: ${v}`)
                   .join(" · ")}

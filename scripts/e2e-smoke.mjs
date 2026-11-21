@@ -94,6 +94,7 @@ try {
   await nav(1);
   await select("map", "Ascent");
   const before = await cells();
+  assert.equal(before.length, 576, "Density uses a fine 24×24 grid");
   await select("map", "Bind");
   const afterMap = await cells();
   assert.notDeepEqual(
@@ -112,7 +113,34 @@ try {
   console.log(
     `PASS shared filters change heatmap counts: map changes ${before.filter((n, i) => n !== afterMap[i]).length} cells; team changes ${afterMap.filter((n, i) => n !== afterTeam[i]).length} cells (${afterTeam.reduce((a, b) => a + b, 0)} casts in final slice)`,
   );
+  await select("team", "all");
+  assert(
+    (await cells()).reduce((a, b) => a + b, 0) >
+      afterTeam.reduce((a, b) => a + b, 0),
+  );
   await select("team", "Nova Ridge");
+  const shapes = [];
+  for (const map of ["Ascent", "Bind", "Haven", "Lotus", "Sunset"]) {
+    await select("map", map);
+    shapes.push(
+      await page
+        .locator(".site-shape")
+        .evaluateAll((nodes) =>
+          nodes.map((n) => n.getAttribute("points")).join("|"),
+        ),
+    );
+    if (map === "Bind")
+      assert.equal(await page.getByTestId("map-teleporter").count(), 2);
+    if (map === "Lotus")
+      assert.equal(await page.getByTestId("map-door").count(), 2);
+    await screenshot(`02-map-${map.toLowerCase()}`);
+  }
+  assert.equal(
+    new Set(shapes).size,
+    5,
+    "Every map has different site geometry",
+  );
+  await select("map", "Bind");
   await page
     .getByRole("button", { name: "Sentinel setups", exact: true })
     .click();
@@ -124,9 +152,13 @@ try {
   await page.getByRole("button", { name: "All utility", exact: true }).click();
   assert((await cells()).reduce((a, b) => a + b, 0) > sentinelCount);
   await page.getByRole("button", { name: "Hard counts", exact: true }).click();
+  assert.equal((await cells()).length, 144, "Counts use a readable 12×12 grid");
   assert((await page.locator(".cell-count").count()) > 0);
   await page.getByLabel("Cast points").check();
   assert((await page.locator(".schematic circle").count()) > 0);
+  await screenshot("02b-hard-counts");
+  await page.getByRole("button", { name: "Density", exact: true }).click();
+  await page.getByLabel("Cast points").uncheck();
   await screenshot("02-utility-heatmap");
   await select("abilityType", "flash");
   assert.equal(
@@ -155,6 +187,18 @@ try {
   await nav(3);
   await screenshot("04-anti-strat-generator");
   assert((await page.locator(".counter").count()) >= 3);
+  const cards = await page
+    .locator(".insight-card")
+    .evaluateAll((nodes) =>
+      nodes.map((n) => ({
+        insight: n.querySelector("h3").textContent,
+        counter: n.querySelector(".counter").textContent,
+      })),
+    );
+  assert(
+    cards.every((c) => !c.counter.includes(c.insight)),
+    "Counters must not repeat the insight text",
+  );
   await nav(4);
   assert.equal(await page.getByTestId("filter-team").inputValue(), "Cloud9");
   await screenshot("05-self-scout");
@@ -236,13 +280,11 @@ try {
   );
 
   await page.getByRole("button", { name: /Data [−+]/ }).click();
-  await page
-    .getByTestId("data-file")
-    .setInputFiles({
-      name: "invalid.csv",
-      mimeType: "text/csv",
-      buffer: Buffer.from("eventType,matchId\nability,m"),
-    });
+  await page.getByTestId("data-file").setInputFiles({
+    name: "invalid.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("eventType,matchId\nability,m"),
+  });
   await page.getByRole("alert").waitFor();
   assert.match(await page.getByRole("status").innerText(), /not applied/);
   await page
@@ -258,17 +300,15 @@ try {
     resolve("public/sample-grid-export.csv"),
     "utf8",
   );
-  await page
-    .getByTestId("data-file")
-    .setInputFiles({
-      name: "custom.csv",
-      mimeType: "text/csv",
-      buffer: Buffer.from(
-        imported
-          .replaceAll("Nova Ridge", "Custom Team")
-          .replaceAll("Cloud9", "Custom Team"),
-      ),
-    });
+  await page.getByTestId("data-file").setInputFiles({
+    name: "custom.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(
+      imported
+        .replaceAll("Nova Ridge", "Custom Team")
+        .replaceAll("Cloud9", "Custom Team"),
+    ),
+  });
   await page
     .getByRole("status")
     .filter({ hasText: /Loaded custom/ })

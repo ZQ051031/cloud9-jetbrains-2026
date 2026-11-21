@@ -1,11 +1,11 @@
 eventType,eventId,matchId,roundNumber,map,team,player,agent,ability,abilityType,agentRole,side,x,y,roundTimeSec,dataLabel
-ability,demo-1,example-1,1,Ascent,Nova Ridge,Quill2,Killjoy,Turret,sentinel,Sentinel,defense,76,50,5,SAMPLE / DEMO DATA
-ability,demo-2,example-1,1,Ascent,Nova Ridge,Quill2,Killjoy,Alarmbot,sentinel,Sentinel,defense,75,49,8,SAMPLE / DEMO DATA
-ability,demo-3,example-1,1,Ascent,Cloud9,Lumen1,Sova,Recon Bolt,recon,Initiator,attack,24,50,12,SAMPLE / DEMO DATA
-ability,demo-4,example-1,2,Ascent,Nova Ridge,Quill2,Cypher,Trapwire,sentinel,Sentinel,defense,77,51,3,SAMPLE / DEMO DATA
-ability,demo-5,example-1,2,Ascent,Cloud9,Glint1,Omen,Dark Cover,smoke,Controller,attack,50,50,22,SAMPLE / DEMO DATA
-ability,demo-6,example-1,3,Ascent,Nova Ridge,Quill2,Vyse,Shear,sentinel,Sentinel,defense,76,50,7,SAMPLE / DEMO DATA
-ability,demo-7,example-1,3,Ascent,Cloud9,Lumen1,Fade,Haunt,recon,Initiator,attack,25,50,35,SAMPLE / DEMO DATA
-ability,demo-8,example-1,4,Ascent,Nova Ridge,Quill2,Deadlock,Sonic Sensor,sentinel,Sentinel,defense,74,50,9,SAMPLE / DEMO DATA
-ability,demo-9,example-1,4,Ascent,Cloud9,Glint1,Clove,Ruse,smoke,Controller,attack,50,48,65,SAMPLE / DEMO DATA
-ability,demo-10,example-1,5,Ascent,Nova Ridge,Quill2,Killjoy,Nanoswarm,sentinel,Sentinel,defense,76,52,15,SAMPLE / DEMO DATA
+ability,demo-1,example-1,1,Ascent,Nova Ridge,Quill2,Killjoy,Turret,sentinel,Sentinel,defense,18.8,22.6,5,SAMPLE / DEMO DATA
+ability,demo-2,example-1,1,Ascent,Nova Ridge,Quill2,Killjoy,Alarmbot,sentinel,Sentinel,defense,20.2,25.3,8,SAMPLE / DEMO DATA
+ability,demo-3,example-1,1,Ascent,Cloud9,Lumen1,Sova,Recon Bolt,recon,Initiator,attack,25.4,73.2,12,SAMPLE / DEMO DATA
+ability,demo-4,example-1,2,Ascent,Nova Ridge,Quill2,Cypher,Trapwire,sentinel,Sentinel,defense,22.1,29.5,3,SAMPLE / DEMO DATA
+ability,demo-5,example-1,2,Ascent,Cloud9,Glint1,Omen,Dark Cover,smoke,Controller,attack,84.2,7.3,22,SAMPLE / DEMO DATA
+ability,demo-6,example-1,3,Ascent,Nova Ridge,Quill2,Vyse,Shear,sentinel,Sentinel,defense,21.5,50.4,7,SAMPLE / DEMO DATA
+ability,demo-7,example-1,3,Ascent,Cloud9,Lumen1,Fade,Haunt,recon,Initiator,attack,75.3,74.6,35,SAMPLE / DEMO DATA
+ability,demo-8,example-1,4,Ascent,Nova Ridge,Quill2,Deadlock,Sonic Sensor,sentinel,Sentinel,defense,14.6,24.8,9,SAMPLE / DEMO DATA
+ability,demo-9,example-1,4,Ascent,Cloud9,Glint1,Clove,Ruse,smoke,Controller,attack,68.2,23.4,65,SAMPLE / DEMO DATA
+ability,demo-10,example-1,5,Ascent,Nova Ridge,Quill2,Killjoy,Nanoswarm,sentinel,Sentinel,defense,19.4,29.6,15,SAMPLE / DEMO DATA

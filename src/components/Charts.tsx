@@ -8,6 +8,18 @@ import type {
 } from "../lib/types";
 
 export const formatPct = (n: number) => `${n.toFixed(0)}%`;
+export function densityColor(density: number) {
+  const d = Number.isFinite(density) ? Math.max(0, Math.min(1, density)) : 0;
+  const stops = [
+      [0, 174, 239],
+      [255, 218, 68],
+      [248, 75, 65],
+    ],
+    from = d < 0.5 ? stops[0] : stops[1],
+    to = d < 0.5 ? stops[1] : stops[2],
+    t = d < 0.5 ? d * 2 : (d - 0.5) * 2;
+  return `rgb(${from.map((n, i) => Math.round(n + (to[i] - n) * t)).join(", ")})`;
+}
 export function EvidenceChips({ evidence: e }: { evidence: Evidence }) {
   return (
     <div className="evidence">
@@ -36,7 +48,8 @@ export function Schematic({
   mini?: boolean;
 }) {
   const geometry = MAPS[map],
-    cells = heatmapGrid(events, 12, 12);
+    bins = counts ? 12 : 24,
+    cells = heatmapGrid(events, bins, bins);
   const polygon = (p: { x: number; y: number }[]) =>
     p.map((a) => `${a.x},${a.y}`).join(" ");
   return (
@@ -70,6 +83,13 @@ export function Schematic({
         height="100"
         fill={`url(#grid-${mini ? "mini" : "full"})`}
       />
+      {geometry.corridors.map((line, i) => (
+        <polyline
+          key={`corridor-${i}`}
+          points={polygon(line)}
+          className="map-corridor"
+        />
+      ))}
       {[
         ...geometry.lanes,
         ...geometry.spawns,
@@ -91,10 +111,10 @@ export function Schematic({
           <rect
             x={c.x}
             y={c.y}
-            width={100 / 12}
-            height={100 / 12}
-            fill={counts ? "#00aeef" : `hsl(${200 - c.density * 160} 95% 55%)`}
-            opacity={c.count ? 0.15 + c.density * 0.65 : 0}
+            width={100 / bins}
+            height={100 / bins}
+            fill={counts ? "#00aeef" : densityColor(c.density)}
+            opacity={c.count ? 0.32 + c.density * 0.6 : 0}
           >
             <title>
               {c.count} casts · density {c.density.toFixed(2)}
@@ -106,14 +126,39 @@ export function Schematic({
         (z) => (
           <text
             key={z.name}
-            x={z.polygon.reduce((s, p) => s + p.x, 0) / z.polygon.length}
-            y={z.polygon.reduce((s, p) => s + p.y, 0) / z.polygon.length + 0.6}
+            x={z.labelAt.x}
+            y={z.labelAt.y + 0.6}
             className={`map-label ${counts ? "subtle-label" : ""}`}
           >
             {z.name}
           </text>
         ),
       )}
+      {geometry.features.map((f) => (
+        <g
+          key={f.label}
+          className={`map-feature ${f.kind}`}
+          data-testid={`map-${f.kind}`}
+        >
+          {f.kind === "teleporter" ? (
+            <>
+              <circle cx={f.x} cy={f.y} r="2.1" />
+              <path d={`M${f.x - 1},${f.y} h2 m-1,-1 l1,1 -1,1`} />
+            </>
+          ) : (
+            <>
+              <path
+                d={`M${f.x - 2},${f.y} a2,2 0 1 1 4,0 a2,2 0 1 1 -4,0`}
+                strokeDasharray="1 .7"
+              />
+              <path d={`M${f.x - 1.5},${f.y + 1.5} l3,-3`} />
+            </>
+          )}
+          <text x={f.x} y={f.y + 4.7}>
+            {f.label}
+          </text>
+        </g>
+      ))}
       {points &&
         events.map((e) => (
           <circle

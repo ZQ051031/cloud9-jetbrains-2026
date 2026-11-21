@@ -632,6 +632,29 @@ main {
   stroke: #3e5b70;
   stroke-width: 0.5;
 }
+.map-corridor {
+  fill: none;
+  stroke: #25475e;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.map-feature {
+  fill: #102b40;
+  stroke: #9cafff;
+  stroke-width: 0.5;
+}
+.map-feature.door {
+  stroke: #f4bb68;
+}
+.map-feature text {
+  font-size: 1.65px;
+  fill: #d9e6ff;
+  stroke: #0c2133;
+  stroke-width: 0.35;
+  text-anchor: middle;
+  paint-order: stroke;
+}
 .site-shape {
   fill: #1b4659;
   stroke: #62a2b7;
@@ -682,9 +705,10 @@ main {
   border-radius: 3px;
   background: linear-gradient(
     90deg,
-    hsl(200 95% 55%),
-    hsl(120 95% 55%),
-    hsl(40 95% 55%)
+    transparent,
+    rgb(0, 174, 239),
+    rgb(255, 218, 68),
+    rgb(248, 75, 65)
   );
 }
 .legend > span:last-child {

@@ -14,7 +14,7 @@ describe('aggregation and filtering',()=>{
   for(const key of ['team','map','player','agent','ability','abilityType','side','phase','matchId'] as const) it(`filters ${key}`,()=>{expect(filterEvents(sampleData.abilityEvents,{[key]:event[key]}).every(e=>e[key]===event[key])).toBe(true);expect(filterEvents([event],{[key]:'missing'})).toEqual([]);});
   it('all and undefined do not filter',()=>expect(filterEvents([event],{team:'all',map:undefined})).toEqual([event]));
   it('empty filters input',()=>expect(filterEvents([],{team:'Cloud9'})).toEqual([]));
-  it('clusters and labels map points',()=>{const c=clusterHotspots([{map:'Ascent',x:24,y:50},{map:'Ascent',x:25,y:50}])[0];expect(c.count).toBe(2);expect(c.share).toBe(100);expect(c.zone).toBe('A Main');});
+  it('clusters and labels map points',()=>{const c=clusterHotspots([{map:'Ascent',x:84,y:49},{map:'Ascent',x:85,y:49}])[0];expect(c.count).toBe(2);expect(c.share).toBe(100);expect(c.zone).toBe('A Main');});
   it('does not merge maps',()=>expect(clusterHotspots([{map:'Ascent',x:24,y:50},{map:'Bind',x:24,y:50}])).toHaveLength(2));
   it('empty and invalid clusters',()=>{expect(clusterHotspots([])).toEqual([]);expect(clusterHotspots([event],0)).toEqual([]);});
   it('sentinel evidence and frequency',()=>{const t=sentinelSetupTendencies(sampleData.abilityEvents)[0];expect(t.pct).toBeGreaterThan(50);expect(t.roundsAnalysed).toBeGreaterThan(0);expect(t.matchesAnalysed).toBeGreaterThan(0);});

@@ -67,9 +67,47 @@ export function scopeData(data: ScoutData, filters: Filters): ScoutData {
   };
 }
 
-export function workspaceAnalysis(data: ScoutData, team: string, map?: string) {
+export function workspaceAnalysis(
+  data: ScoutData,
+  team: string,
+  map?: string,
+  side?: string,
+): {
+  insights: Insight[];
+  antiStrats: ReturnType<typeof generateAntiStrats>;
+  stats: ReturnType<typeof operatorStats>;
+} {
+  if (team === "all") {
+    const teams = [
+      ...new Set([
+        ...data.abilityEvents.map((e) => e.team),
+        ...data.sniperEvents.map((e) => e.team),
+      ]),
+    ];
+    const groups = teams.map((t) => ({
+      team: t,
+      result: workspaceAnalysis(
+        scopeData(data, { team: t, side }),
+        t,
+        map,
+        side,
+      ),
+    }));
+    return {
+      insights: groups.flatMap((g) => g.result.insights),
+      antiStrats: groups.flatMap((g) => g.result.antiStrats),
+      stats: {
+        players: groups.flatMap((g) =>
+          g.result.stats.players.filter((p) => p.team === g.team),
+        ),
+        teams: groups.flatMap((g) =>
+          g.result.stats.teams.filter((t) => t.team === g.team),
+        ),
+      },
+    };
+  }
   const insights = generateInsights(data, team, map);
-  const events = data.abilityEvents.filter((e) => e.team === team);
+  const events = filterEvents(data.abilityEvents, { team, map });
   const timing = tendencyPercentages(events, (e) => e.phase).items[0];
   if (timing) {
     const phaseName = {
@@ -80,6 +118,7 @@ export function workspaceAnalysis(data: ScoutData, team: string, map?: string) {
     insights.push({
       id: `timing:${team}:${map ?? "all"}`,
       category: "timing",
+      context: { phase: timing.key as "early" | "mid" | "late" },
       text: `${team} most often (${timing.pct.toFixed(0)}%) casts utility in the ${phaseName} phase${map && map !== "all" ? ` on ${map}` : ""}.`,
       evidence: {
         sampleSize: events.length,
@@ -91,16 +130,16 @@ export function workspaceAnalysis(data: ScoutData, team: string, map?: string) {
       },
     } satisfies Insight);
   }
-  const antiStrats = generateAntiStrats(insights).map((a) =>
-    insights.find((i) => i.id === a.insightId)?.category === "timing"
-      ? {
-          ...a,
-          title: "Break the utility rhythm",
-          counter:
-            "Show an early fake with a Fade Prowler, hold your execute until the observed utility window ends, then re-clear with Sova Recon Bolt. Change the timing next round rather than repeating the same entry.",
-        }
-      : a,
+  const antiStrats = generateAntiStrats(insights);
+  const stats = operatorStats(
+    data.sniperEvents,
+    data.rounds.filter(
+      (r) =>
+        !active(side) ||
+        (side === "attack"
+          ? r.attackingTeam === team
+          : r.defendingTeam === team),
+    ),
   );
-  const stats = operatorStats(data.sniperEvents, data.rounds);
   return { insights, antiStrats, stats };
 }
