@@ -1,7 +1,0 @@
-node_modules/
-dist/
-*.tsbuildinfo
-.idea/*
-!.idea/runConfigurations/
-.idea/runConfigurations/*
-!.idea/runConfigurations/*.xml
